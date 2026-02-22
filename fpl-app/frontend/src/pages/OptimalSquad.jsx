@@ -77,8 +77,18 @@ export default function OptimalSquad() {
               <div className="stat-value green">{result.predicted_points}</div>
             </div>
             <div className="stat-card">
-              <div className="stat-label">Squad Size</div>
-              <div className="stat-value blue">15</div>
+              <div className="stat-label">Captain</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ background: "#ffd700", color: "#000", fontWeight: 900, borderRadius: "50%", width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>C</span>
+                <span style={{ fontWeight: 600, fontSize: 15 }}>{result.captain}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Vice Captain</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ background: "var(--accent)", color: "#000", fontWeight: 900, borderRadius: "50%", width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>V</span>
+                <span style={{ fontWeight: 600, fontSize: 15 }}>{result.vice_captain}</span>
+              </div>
             </div>
           </div>
 
@@ -97,7 +107,11 @@ export default function OptimalSquad() {
                     {group.map((p) => (
                       <div key={p.web_name} className="player-row starter">
                         <span className={`pos pos-${p.position}`}>{p.position}</span>
-                        <span className="player-name">{p.web_name}</span>
+                        <span className="player-name">
+                          {p.web_name}
+                          {p.web_name === result.captain      && <span style={{ marginLeft: 6, background: "#ffd700", color: "#000", fontWeight: 900, borderRadius: "50%", width: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>C</span>}
+                          {p.web_name === result.vice_captain && <span style={{ marginLeft: 6, background: "var(--accent)", color: "#000", fontWeight: 900, borderRadius: "50%", width: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>V</span>}
+                        </span>
                         <span className="player-team">{p.team_name}</span>
                         <span className="player-price">£{p.price.toFixed(1)}m</span>
                         <span className="player-pts">{p.predicted_pts}</span>

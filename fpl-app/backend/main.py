@@ -187,10 +187,18 @@ def optimize_squad(req: OptimizeRequest):
     starters   = squad[squad["is_starter"] == True]
     bench      = squad[squad["is_starter"] == False]
     cols       = ["web_name", "team_name", "position", "price", "predicted_pts", "is_starter"]
+
+    # Captain = highest predicted pts in XI, Vice = second highest
+    starters_sorted = starters.sort_values("predicted_pts", ascending=False)
+    captain_name      = starters_sorted.iloc[0]["web_name"]
+    vice_captain_name = starters_sorted.iloc[1]["web_name"]
+
     return {
         "total_cost":       round(squad["now_cost"].sum() / 10, 1),
         "predicted_points": round(float(starters["predicted_pts"].sum()), 2),
         "budget_remaining": round(req.budget - squad["now_cost"].sum() / 10, 1),
+        "captain":          captain_name,
+        "vice_captain":     vice_captain_name,
         "starters":         starters[cols].to_dict(orient="records"),
         "bench":            bench[cols].to_dict(orient="records"),
     }
@@ -317,11 +325,18 @@ def optimize_transfers(req: TransferRequest):
     pts_gain      = float(transfers_in["predicted_pts"].sum() - transfers_out["predicted_pts"].sum())
     cols          = ["player_id", "web_name", "team_name", "position", "price", "predicted_pts"]
 
+    # Captain = highest predicted pts in new squad, Vice = second highest
+    new_sorted        = new_squad.sort_values("predicted_pts", ascending=False)
+    captain_name      = new_sorted.iloc[0]["web_name"]
+    vice_captain_name = new_sorted.iloc[1]["web_name"]
+
     return {
         "transfers_made":  n_in,
         "hits_taken":      hits_taken,
         "points_hit":      hits_taken * req.hit_cost,
         "net_pts_gain":    round(pts_gain - hits_taken * req.hit_cost, 2),
+        "captain":         captain_name,
+        "vice_captain":    vice_captain_name,
         "transfers_in":    transfers_in[cols].to_dict(orient="records"),
         "transfers_out":   transfers_out[cols].to_dict(orient="records"),
         "new_squad":       new_squad[cols + ["in_current"]].to_dict(orient="records"),

@@ -168,6 +168,20 @@ export default function TransferPlanner() {
             <div className="stat-card"><div className="stat-label">Hits Taken</div><div className={`stat-value ${result.hits_taken > 0 ? "red" : "green"}`}>{result.hits_taken}</div></div>
             <div className="stat-card"><div className="stat-label">Points Hit</div><div className={`stat-value ${result.points_hit > 0 ? "red" : "green"}`}>{result.points_hit > 0 ? `-${result.points_hit}` : "0"}</div></div>
             <div className="stat-card"><div className="stat-label">Net Pts Gain</div><div className={`stat-value ${result.net_pts_gain >= 0 ? "green" : "red"}`}>{result.net_pts_gain > 0 ? "+" : ""}{result.net_pts_gain}</div></div>
+            <div className="stat-card">
+              <div className="stat-label">Captain</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <span style={{ background: "#ffd700", color: "#000", fontWeight: 900, borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, flexShrink: 0 }}>C</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{result.captain}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Vice Captain</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <span style={{ background: "var(--accent)", color: "#000", fontWeight: 900, borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, flexShrink: 0 }}>V</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{result.vice_captain}</span>
+              </div>
+            </div>
           </div>
 
           {result.transfers_made === 0 ? (
