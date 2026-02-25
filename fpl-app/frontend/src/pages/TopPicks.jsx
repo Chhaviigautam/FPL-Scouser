@@ -64,8 +64,7 @@ export default function TopPicks() {
                 <th>Pos</th>
                 <th>Price</th>
                 <th>Predicted Pts</th>
-                <th>Form (3GW)</th>
-                <th>xGI (3GW)</th>
+              
               </tr>
             </thead>
             <tbody>
@@ -84,8 +83,7 @@ export default function TopPicks() {
                       <span className="pts-num">{p.predicted_pts}</span>
                     </div>
                   </td>
-                  <td className="pts-num" style={{color:"var(--text2)"}}>{p.avg_pts_last3 ?? "—"}</td>
-                  <td className="pts-num" style={{color:"var(--text2)"}}>{p.avg_xgi_last3 ?? "—"}</td>
+                  
                 </tr>
               ))}
             </tbody>
