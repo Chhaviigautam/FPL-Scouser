@@ -18,11 +18,7 @@ const KITS = {
 // The other competitions are greyed out / coming soon.
 const LEAGUES = [
   { id:"pl",     name:"Premier League",   country:"England", accent:"#38003c", text:"#00ff85", active:true  },
-  { id:"ucl",    name:"Champions League", country:"Europe",  accent:"#2a2a3a", text:"#555577", active:false },
-  { id:"laliga", name:"La Liga",          country:"Spain",   accent:"#3a2a10", text:"#664400", active:false },
-  { id:"bl",     name:"Bundesliga",       country:"Germany", accent:"#3a1010", text:"#663333", active:false },
-  { id:"sa",     name:"Serie A",          country:"Italy",   accent:"#101030", text:"#333366", active:false },
-  { id:"el",     name:"Europa League",    country:"Europe",  accent:"#2a2010", text:"#554400", active:false },
+  
 ];
 
 const PL_TEAMS = [
