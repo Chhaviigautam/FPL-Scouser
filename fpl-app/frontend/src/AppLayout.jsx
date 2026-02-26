@@ -14,12 +14,21 @@ import GameweekHub    from "./pages/GameweekHub";
 
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 const NAV = [
+<<<<<<< HEAD
   { id:"home",      label:"Home",        icon:"⌂", component:null            },  // rendered specially with onNavigate
   { id:"squad",     label:"My Squad",    icon:"◈", component:MainPitch       },
   { id:"picks",     label:"Top Picks",   icon:"◉", component:TopPicks        },
   { id:"optimal",   label:"Optimal XI",  icon:"◫", component:OptimalSquad    },
   { id:"transfers", label:"Transfers",   icon:"⇄", component:TransferPlanner },
   { id:"insights",  label:"Insights",    icon:"◎", component:ModelInsights   },
+=======
+  { id:"squad",     label:"My Squad",   icon:"◈", component:MainPitch       },
+  { id:"picks",     label:"Top Picks",  icon:"◉", component:TopPicks        },
+  { id:"optimal",   label:"Optimal XI", icon:"◫", component:OptimalSquad    },
+  { id:"transfers", label:"Transfers",  icon:"⇄", component:TransferPlanner },
+  { id:"insights",  label:"Insights",   icon:"◎", component:ModelInsights   },
+  { id:"india", label:"India FC", icon:"◉", component:IndianFootballCommunity },
+>>>>>>> f1b71f8 (Frontend updates)
 ];
 
 // ─── FPL-STYLE TOPBAR ─────────────────────────────────────────────────────────
