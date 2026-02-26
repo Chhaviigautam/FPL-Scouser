@@ -23,4 +23,10 @@ export const api = {
   optimizeSquad:    (budget) => req("/squad/optimize", { method: "POST", body: JSON.stringify({ budget }) }),
   fetchSquad:       (teamId) => req(`/transfers/squad/${teamId}`),
   optimizeTransfers:(body)   => req("/transfers/optimize", { method: "POST", body: JSON.stringify(body) }),
+  getFplNews:       ()       => req("/fpl/news"),
+  getFplFixtures:   (event)  => {
+    const qs = event ? `?event=${event}` : "";
+    return req(`/fpl/fixtures${qs}`);
+  },
+  getPlTable:       ()       => req("/pl/table"),
 };

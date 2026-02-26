@@ -10,13 +10,16 @@ import OptimalSquad    from "./pages/OptimalSquad";
 import TransferPlanner from "./pages/TransferPlanner";
 import ModelInsights   from "./pages/ModelInsights";
 
+import GameweekHub    from "./pages/GameweekHub";
+
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 const NAV = [
-  { id:"squad",     label:"My Squad",   icon:"◈", component:MainPitch       },
-  { id:"picks",     label:"Top Picks",  icon:"◉", component:TopPicks        },
-  { id:"optimal",   label:"Optimal XI", icon:"◫", component:OptimalSquad    },
-  { id:"transfers", label:"Transfers",  icon:"⇄", component:TransferPlanner },
-  { id:"insights",  label:"Insights",   icon:"◎", component:ModelInsights   },
+  { id:"home",      label:"Home",        icon:"⌂", component:null            },  // rendered specially with onNavigate
+  { id:"squad",     label:"My Squad",    icon:"◈", component:MainPitch       },
+  { id:"picks",     label:"Top Picks",   icon:"◉", component:TopPicks        },
+  { id:"optimal",   label:"Optimal XI",  icon:"◫", component:OptimalSquad    },
+  { id:"transfers", label:"Transfers",   icon:"⇄", component:TransferPlanner },
+  { id:"insights",  label:"Insights",    icon:"◎", component:ModelInsights   },
 ];
 
 // ─── FPL-STYLE TOPBAR ─────────────────────────────────────────────────────────
@@ -173,10 +176,10 @@ function Topbar({ active, setActive }) {
 
 // ─── APP LAYOUT ───────────────────────────────────────────────────────────────
 export default function AppLayout() {
-  const [activePage, setActivePage] = useState("squad");
+  const [activePage, setActivePage] = useState("home");
   const [activeTeam, setActiveTeam] = useState(null);
 
-  const ActivePage = NAV.find(n=>n.id===activePage)?.component || MainPitch;
+  const ActivePage = NAV.find(n=>n.id===activePage)?.component || null;
 
   return (
     <>
@@ -575,7 +578,10 @@ export default function AppLayout() {
             background:"#050d14",
           }}>
             <div className="page-in">
-              <ActivePage/>
+              {activePage === "home"
+                ? <GameweekHub onNavigate={setActivePage} />
+                : ActivePage ? <ActivePage /> : null
+              }
             </div>
           </main>
 

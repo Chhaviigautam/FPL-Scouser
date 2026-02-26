@@ -536,3 +536,181 @@ def optimize_transfers(req: TransferRequest):
         "gameweek":        squad_data["gameweek"],
         "itb":             round(float(squad_data["itb"]), 1),
     }
+
+
+# ── FPL News & Fixtures & PL Table ────────────────────────────────────────────
+
+@app.get("/api/fpl/news")
+def fpl_news(limit: int = 10):
+    """Build a news feed from FPL player injury/news strings."""
+    BASE_URL = "https://fantasy.premierleague.com/api"
+    try:
+        r        = requests.get(f"{BASE_URL}/bootstrap-static/", timeout=10).json()
+        elements = pd.DataFrame(r["elements"])
+    except Exception as e:
+        raise HTTPException(500, f"Could not fetch FPL news: {e}")
+
+    news_df = elements.loc[elements["news"].fillna("").str.len() > 0,
+        ["id", "web_name", "news", "news_added", "status"]].copy()
+    if news_df.empty:
+        return []
+
+    if "news_added" in news_df.columns:
+        news_df["news_added"] = pd.to_datetime(news_df["news_added"], errors="coerce")
+        news_df = news_df.sort_values("news_added", ascending=False)
+
+    def _cat(row):
+        txt = str(row.get("news", "")).lower()
+        if any(k in txt for k in ["injury","injured","doubt","doubtful","knock"]):
+            return "INJURY"
+        return "FPL"
+
+    out = []
+    for _, row in news_df.head(limit).iterrows():
+        cat   = _cat(row)
+        added = row.get("news_added")
+        time_lbl = str(added)[:16] if pd.notna(added) else "recent"
+        out.append({
+            "id":       int(row["id"]),
+            "cat":      cat,
+            "hot":      cat == "INJURY",
+            "icon":     "🩹" if cat == "INJURY" else "📊",
+            "headline": f"{row['web_name']}: {row['news']}",
+            "time":     time_lbl,
+        })
+    return out
+
+
+@app.get("/api/fpl/fixtures")
+def fpl_fixtures(event: Optional[int] = None):
+    """Return fixtures for the current (or given) gameweek."""
+    BASE_URL = "https://fantasy.premierleague.com/api"
+    try:
+        boot  = requests.get(f"{BASE_URL}/bootstrap-static/", timeout=10).json()
+        teams = pd.DataFrame(boot["teams"])
+        evts  = pd.DataFrame(boot["events"])
+    except Exception as e:
+        raise HTTPException(500, f"Could not fetch bootstrap data: {e}")
+
+    gw = event
+    if gw is None:
+        cur = evts[evts["is_current"] == True]
+        gw  = int(cur["id"].iloc[0]) if len(cur) else int(evts[evts["finished"]==True]["id"].max())
+
+    try:
+        fixtures = requests.get(f"{BASE_URL}/fixtures/?event={gw}", timeout=10).json()
+    except Exception as e:
+        raise HTTPException(500, f"Could not fetch fixtures: {e}")
+
+    name_map  = teams.set_index("id")["name"].to_dict()
+    short_map = teams.set_index("id")["short_name"].to_dict()
+    COLOR_MAP = {
+        "ARS":"#EF0107","AVL":"#670E36","BOU":"#DA291C","BRE":"#E30613",
+        "BHA":"#0057B8","CHE":"#034694","CRY":"#1B458F","EVE":"#003399",
+        "FUL":"#000000","LIV":"#C8102E","MCI":"#6CABDD","MUN":"#DA291C",
+        "NEW":"#241F20","NFO":"#DD0000","SOU":"#D71920","TOT":"#132257",
+        "WHU":"#7A263A","WOL":"#FDB913",
+    }
+
+    items = []
+    for fx in fixtures:
+        hid = fx["team_h"]; aid = fx["team_a"]
+        hs  = short_map.get(hid, "")[:3].upper()
+        as_ = short_map.get(aid, "")[:3].upper()
+        started  = bool(fx.get("started"))
+        finished = bool(fx.get("finished"))
+        live     = started and not finished
+        upcoming = not started
+        min_lbl  = "FT" if finished else ""
+        if upcoming and fx.get("kickoff_time"):
+            try: min_lbl = pd.to_datetime(fx["kickoff_time"]).strftime("%H:%M")
+            except: min_lbl = ""
+        items.append({
+            "id": fx["id"], "h": name_map.get(hid, hs), "hs": hs,
+            "hc": COLOR_MAP.get(hs, "#111827"), "hg": fx.get("team_h_score"),
+            "a":  name_map.get(aid, as_),        "as_": as_,
+            "ac": COLOR_MAP.get(as_, "#111827"), "ag": fx.get("team_a_score"),
+            "min": min_lbl, "live": live, "upcoming": upcoming,
+        })
+    return items
+
+
+@app.get("/api/pl/table")
+def pl_table():
+    """
+    Build the real Premier League table by computing W/D/L/GD/Pts
+    from every finished FPL fixture. This is the only reliable way —
+    the FPL teams endpoint win/draw/loss fields are not real league stats.
+    """
+    BASE_URL = "https://fantasy.premierleague.com/api"
+    try:
+        boot     = requests.get(f"{BASE_URL}/bootstrap-static/", timeout=10).json()
+        fixtures = requests.get(f"{BASE_URL}/fixtures/",         timeout=10).json()
+        teams_df = pd.DataFrame(boot["teams"])
+    except Exception as e:
+        raise HTTPException(500, f"Could not fetch FPL data: {e}")
+
+    # id → display name mapping
+    name_map = {
+        "Arsenal":       "Arsenal",       "Aston Villa":  "Aston Villa",
+        "Bournemouth":   "Bournemouth",   "Brentford":    "Brentford",
+        "Brighton":      "Brighton",      "Chelsea":      "Chelsea",
+        "Crystal Palace":"Crystal Palace","Everton":      "Everton",
+        "Fulham":        "Fulham",        "Ipswich":      "Ipswich",
+        "Leicester":     "Leicester",     "Liverpool":    "Liverpool",
+        "Man City":      "Man City",      "Man Utd":      "Man United",
+        "Newcastle":     "Newcastle",     "Nott'm Forest":"Nottm Forest",
+        "Southampton":   "Southampton",   "Spurs":        "Tottenham",
+        "West Ham":      "West Ham",      "Wolves":       "Wolves",
+    }
+    id_to_name = {
+        int(row["id"]): name_map.get(str(row["name"]), str(row["name"]))
+        for _, row in teams_df.iterrows()
+    }
+
+    # Initialise table
+    table = {
+        tid: {"name": id_to_name.get(tid, str(tid)),
+              "played": 0, "win": 0, "draw": 0, "loss": 0,
+              "gf": 0, "ga": 0, "gd": 0, "points": 0}
+        for tid in id_to_name
+    }
+
+    # Process every finished fixture
+    for fx in fixtures:
+        if not fx.get("finished"):
+            continue
+        h_id = fx.get("team_h")
+        a_id = fx.get("team_a")
+        hg   = fx.get("team_h_score")
+        ag   = fx.get("team_a_score")
+        if h_id not in table or a_id not in table:
+            continue
+        if hg is None or ag is None:
+            continue
+        hg, ag = int(hg), int(ag)
+
+        for tid, gf, ga in [(h_id, hg, ag), (a_id, ag, hg)]:
+            t = table[tid]
+            t["played"] += 1
+            t["gf"]     += gf
+            t["ga"]     += ga
+            t["gd"]     += gf - ga
+            if gf > ga:
+                t["win"]    += 1
+                t["points"] += 3
+            elif gf == ga:
+                t["draw"]   += 1
+                t["points"] += 1
+            else:
+                t["loss"]   += 1
+
+    # Sort: pts desc, gd desc, gf desc
+    ranked = sorted(
+        table.values(),
+        key=lambda x: (-x["points"], -x["gd"], -x["gf"])
+    )
+    for i, row in enumerate(ranked):
+        row["position"] = i + 1
+
+    return ranked

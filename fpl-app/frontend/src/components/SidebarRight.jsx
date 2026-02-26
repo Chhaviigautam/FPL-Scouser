@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGameweek } from "../hooks/useGameweek";
+import { api } from "../api/client";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 const SCORES = [
@@ -145,15 +146,41 @@ function NewsCard({ item }) {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function SidebarRight() {
-  const [tab, setTab]    = useState("news");
-  const { gw, loading }  = useGameweek();
-  const gwLabel          = loading ? "···" : gw ? `Gameweek ${gw}` : "Premier League";
-  const gwShort          = loading ? "···" : gw ? `GW${gw}` : "GW";
-  const liveLbl          = loading ? "···" : gw ? `2 matches live · GW${gw}` : "2 matches live";
+  const [tab, setTab]       = useState("news");
+  const [scores, setScores] = useState(SCORES);
+  const [news, setNews]     = useState(NEWS);
+  const { gw, loading }     = useGameweek();
+  const gwLabel             = loading ? "···" : gw ? `Gameweek ${gw}` : "Premier League";
+  const gwShort             = loading ? "···" : gw ? `GW${gw}` : "GW";
+  const liveLbl             = loading ? "···" : gw ? `Live fixtures · ${gwShort}` : "Live fixtures";
+
+  useEffect(() => {
+    // Fetch live fixtures for the current GW
+    api.getFplFixtures(gw)
+      .then((data) => {
+        if (Array.isArray(data) && data.length) {
+          setScores(data);
+        }
+      })
+      .catch(() => {
+        // fall back to static SCORES
+      });
+
+    // Fetch latest player-related FPL news
+    api.getFplNews()
+      .then((items) => {
+        if (Array.isArray(items) && items.length) {
+          setNews(items);
+        }
+      })
+      .catch(() => {
+        // fall back to static NEWS
+      });
+  }, [gw]);
 
   return (
-    <aside style={{
-      width:262, height:"100vh",
+      <aside style={{
+      width:300, height:"100vh",
       background:"linear-gradient(180deg,#06101c 0%,#080f1a 100%)",
       borderLeft:"1px solid rgba(5,240,255,0.08)",
       display:"flex",flexDirection:"column",
@@ -168,9 +195,9 @@ export default function SidebarRight() {
           const active = tab===t.id;
           return (
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
-              flex:1, padding:"12px 0", background:"none", border:"none",
-              borderBottom: active ? "2.5px solid #05f0ff" : "2.5px solid transparent",
-              fontSize:11,fontWeight:900,
+              flex:1, padding:"16px 0", background:"none", border:"none",
+              borderBottom: active ? "3px solid #05f0ff" : "3px solid transparent",
+              fontSize:13,fontWeight:900,
               color: active ? "#fff" : "rgba(255,255,255,0.3)",
               fontFamily:"'Barlow Condensed',monospace",
               textTransform:"uppercase",letterSpacing:"0.12em",
@@ -182,28 +209,28 @@ export default function SidebarRight() {
 
       {/* GW Scores tab */}
       {tab==="scores" && (
-        <div style={{ padding:"12px", flex:1 }}>
-          <div style={{fontSize:9,fontWeight:900,letterSpacing:"0.18em",color:"rgba(5,240,255,0.5)",textTransform:"uppercase",fontFamily:"'Barlow Condensed',monospace",marginBottom:10}}>
-            ✦ {gwLabel}
+        <div style={{ padding:"16px", flex:1 }}>
+          <div style={{fontSize:11,fontWeight:900,letterSpacing:"0.18em",color:"rgba(5,240,255,0.6)",textTransform:"uppercase",fontFamily:"'Barlow Condensed',monospace",marginBottom:12}}>
+            ✦ {gwLabel} — Fixtures
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:5}}>
-            {SCORES.map(m=><ScoreCard key={m.id} m={m}/>)}
+            {scores.map(m=><ScoreCard key={m.id} m={m}/>)}
           </div>
-          <div style={{marginTop:14,display:"flex",alignItems:"center",gap:6,padding:"7px 10px",background:"rgba(5,240,255,0.04)",border:"1px solid rgba(5,240,255,0.08)",borderRadius:7}}>
+          <div style={{marginTop:16,display:"flex",alignItems:"center",gap:8,padding:"9px 12px",background:"rgba(5,240,255,0.04)",border:"1px solid rgba(5,240,255,0.08)",borderRadius:8}}>
             <div style={{width:5,height:5,borderRadius:"50%",background:"#05f0ff",boxShadow:"0 0 5px #05f0ff",animation:"livePulse 1.3s ease-in-out infinite"}}/>
-            <span style={{fontSize:9.5,color:"rgba(255,255,255,0.35)",fontFamily:"'Barlow Condensed',monospace",letterSpacing:"0.06em"}}>{liveLbl}</span>
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"'Barlow Condensed',monospace",letterSpacing:"0.06em"}}>{liveLbl}</span>
           </div>
         </div>
       )}
 
       {/* News tab */}
       {tab==="news" && (
-        <div style={{ padding:"12px", flex:1 }}>
-          <div style={{fontSize:9,fontWeight:900,letterSpacing:"0.18em",color:"rgba(5,240,255,0.5)",textTransform:"uppercase",fontFamily:"'Barlow Condensed',monospace",marginBottom:4}}>
+        <div style={{ padding:"16px", flex:1 }}>
+          <div style={{fontSize:11,fontWeight:900,letterSpacing:"0.18em",color:"rgba(5,240,255,0.6)",textTransform:"uppercase",fontFamily:"'Barlow Condensed',monospace",marginBottom:6}}>
             ✦ Premier League News
           </div>
-          {NEWS.map(item=><NewsCard key={item.id} item={item}/>)}
-          <div style={{marginTop:10,textAlign:"center",padding:"8px 0",fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:"'Barlow Condensed',monospace",letterSpacing:"0.2em"}}>· · ·</div>
+          {news.map(item=><NewsCard key={item.id} item={item}/>)}
+          <div style={{marginTop:12,textAlign:"center",padding:"10px 0",fontSize:11,color:"rgba(255,255,255,0.18)",fontFamily:"'Barlow Condensed',monospace",letterSpacing:"0.2em"}}>· · ·</div>
         </div>
       )}
 

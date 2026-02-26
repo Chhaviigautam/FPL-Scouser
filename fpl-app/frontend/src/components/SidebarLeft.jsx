@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "../api/client";
 
 // ─── KIT COLORS ───────────────────────────────────────────────────────────────
 const KITS = {
@@ -22,27 +23,29 @@ const LEAGUES = [
 ];
 
 const PL_TEAMS = [
-  { id:1,  name:"Arsenal",        abbr:"ARS", kit:"ARS", pos:1,  pts:82 },
-  { id:2,  name:"Liverpool",      abbr:"LIV", kit:"LIV", pos:2,  pts:79 },
-  { id:3,  name:"Man City",       abbr:"MCI", kit:"MCI", pos:3,  pts:74 },
-  { id:4,  name:"Chelsea",        abbr:"CHE", kit:"CHE", pos:4,  pts:67 },
-  { id:5,  name:"Aston Villa",    abbr:"AVL", kit:"AVL", pos:5,  pts:65 },
-  { id:6,  name:"Tottenham",      abbr:"TOT", kit:"TOT", pos:6,  pts:60 },
-  { id:7,  name:"Newcastle",      abbr:"NEW", kit:"NEW", pos:7,  pts:57 },
-  { id:8,  name:"Brighton",       abbr:"BHA", kit:"BHA", pos:8,  pts:51 },
-  { id:9,  name:"Brentford",      abbr:"BRE", kit:"BRE", pos:9,  pts:48 },
-  { id:10, name:"Fulham",         abbr:"FUL", kit:"FUL", pos:10, pts:46 },
-  { id:11, name:"Man United",     abbr:"MUN", kit:"MUN", pos:11, pts:42 },
-  { id:12, name:"Wolves",         abbr:"WOL", kit:"WOL", pos:12, pts:44 },
-  { id:13, name:"West Ham",       abbr:"WHU", kit:"WHU", pos:13, pts:38 },
-  { id:14, name:"Everton",        abbr:"EVE", kit:"EVE", pos:14, pts:37 },
-  { id:15, name:"Crystal Palace", abbr:"CRY", kit:"CRY", pos:15, pts:36 },
-  { id:16, name:"Nottm Forest",   abbr:"NFO", kit:"NFO", pos:16, pts:35 },
-  { id:17, name:"Bournemouth",    abbr:"BOU", kit:"BOU", pos:17, pts:33 },
-  { id:18, name:"Leicester",      abbr:"LEI", kit:"LEI", pos:18, pts:28 },
-  { id:19, name:"Ipswich",        abbr:"IPS", kit:"IPS", pos:19, pts:22 },
-  { id:20, name:"Southampton",    abbr:"SOU", kit:"SOU", pos:20, pts:13 },
+  { id:1,  name:"Arsenal",        abbr:"ARS", kit:"ARS", pos:1,  pts:65 },
+  { id:2,  name:"Liverpool",      abbr:"LIV", kit:"LIV", pos:2,  pts:63 },
+  { id:3,  name:"Man City",       abbr:"MCI", kit:"MCI", pos:3,  pts:61 },
+  { id:4,  name:"Chelsea",        abbr:"CHE", kit:"CHE", pos:4,  pts:58 },
+  { id:5,  name:"Aston Villa",    abbr:"AVL", kit:"AVL", pos:5,  pts:56 },
+  { id:6,  name:"Tottenham",      abbr:"TOT", kit:"TOT", pos:6,  pts:53 },
+  { id:7,  name:"Newcastle",      abbr:"NEW", kit:"NEW", pos:7,  pts:51 },
+  { id:8,  name:"Brighton",       abbr:"BHA", kit:"BHA", pos:8,  pts:47 },
+  { id:9,  name:"Brentford",      abbr:"BRE", kit:"BRE", pos:9,  pts:44 },
+  { id:10, name:"Fulham",         abbr:"FUL", kit:"FUL", pos:10, pts:42 },
+  { id:11, name:"Man United",     abbr:"MUN", kit:"MUN", pos:11, pts:40 },
+  { id:12, name:"Wolves",         abbr:"WOL", kit:"WOL", pos:12, pts:38 },
+  { id:13, name:"West Ham",       abbr:"WHU", kit:"WHU", pos:13, pts:35 },
+  { id:14, name:"Everton",        abbr:"EVE", kit:"EVE", pos:14, pts:32 },
+  { id:15, name:"Crystal Palace", abbr:"CRY", kit:"CRY", pos:15, pts:30 },
+  { id:16, name:"Nottm Forest",   abbr:"NFO", kit:"NFO", pos:16, pts:28 },
+  { id:17, name:"Bournemouth",    abbr:"BOU", kit:"BOU", pos:17, pts:26 },
+  { id:18, name:"Leicester",      abbr:"LEI", kit:"LEI", pos:18, pts:23 },
+  { id:19, name:"Ipswich",        abbr:"IPS", kit:"IPS", pos:19, pts:20 },
+  { id:20, name:"Southampton",    abbr:"SOU", kit:"SOU", pos:20, pts:15 },
 ];
+
+const PL_TEAMS_ALPHA = [...PL_TEAMS].sort((a, b) => a.name.localeCompare(b.name));
 
 // ─── MINI SHIRT BADGE ─────────────────────────────────────────────────────────
 function MiniShirt({ kit, size = 26 }) {
@@ -87,6 +90,28 @@ function LeagueIcon({ lg, size = 28 }) {
 export default function SidebarLeft({ activeTeam, setActiveTeam }) {
   const [activeLeague, setActiveLeague] = useState("pl");
   const [viewMode,     setViewMode]     = useState("list");
+  const [teams,        setTeams]        = useState(PL_TEAMS);
+
+  useEffect(() => {
+    api.getPlTable()
+      .then(rows => {
+        if (!Array.isArray(rows) || !rows.length) return;
+        const byName = Object.fromEntries(rows.map(r => [r.name, r]));
+        const merged = PL_TEAMS.map(t => {
+          const live = byName[t.name];
+          if (!live) return t;
+          return {
+            ...t,
+            pos: live.position ?? t.pos,
+            pts: live.points ?? t.pts,
+          };
+        }).sort((a, b) => a.pos - b.pos);
+        setTeams(merged);
+      })
+      .catch(() => {
+        // fall back to static PL_TEAMS
+      });
+  }, []);
 
   return (
     <aside style={{
@@ -221,7 +246,7 @@ export default function SidebarLeft({ activeTeam, setActiveTeam }) {
                 </div>
               ))}
             </div>
-            {PL_TEAMS.map(team=>{
+            {teams.map(team=>{
               const active = activeTeam===team.id;
               const posColor = team.pos<=4 ? "#00ff87" : team.pos>=18 ? "#ff4d4d" : "rgba(255,255,255,0.3)";
               return (
@@ -265,7 +290,7 @@ export default function SidebarLeft({ activeTeam, setActiveTeam }) {
         )}
 
         {/* List view */}
-        {viewMode === "list" && PL_TEAMS.map(team=>{
+        {viewMode === "list" && [...teams].sort((a,b)=>a.name.localeCompare(b.name)).map(team=>{
           const active = activeTeam===team.id;
           const posColor = team.pos<=4 ? "#00ff87" : team.pos>=18 ? "#ff4d4d" : "rgba(255,255,255,0.28)";
           return (
@@ -300,12 +325,8 @@ export default function SidebarLeft({ activeTeam, setActiveTeam }) {
                 {team.name}
               </span>
               <span style={{
-                fontSize:10.5, fontWeight:700,
-                color: active?"rgba(5,240,255,0.8)":"rgba(255,255,255,0.3)",
-                fontFamily:"'Barlow Condensed',monospace", flexShrink:0,
-              }}>
-                {team.pts}
-              </span>
+                display:"none",
+              }}/>
             </button>
           );
         })}
