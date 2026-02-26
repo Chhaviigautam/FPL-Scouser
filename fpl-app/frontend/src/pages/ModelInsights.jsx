@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { api } from "../api/client";
+import { api } from "../api/client";   //connecting backend with frontend
 
 const FEATURE_LABELS = {
   avg_pts_last3:          "Avg Pts (3GW)",
