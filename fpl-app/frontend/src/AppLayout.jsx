@@ -9,6 +9,7 @@ import TopPicks        from "./pages/TopPicks";
 import OptimalSquad    from "./pages/OptimalSquad";
 import TransferPlanner from "./pages/TransferPlanner";
 import ModelInsights   from "./pages/ModelInsights";
+import IndianFootballCommunity from "./pages/IndianFootballCommunity";
 
 import GameweekHub    from "./pages/GameweekHub";
 
@@ -20,6 +21,7 @@ const NAV = [
   { id:"optimal",   label:"Optimal XI",  icon:"◫", component:OptimalSquad    },
   { id:"transfers", label:"Transfers",   icon:"⇄", component:TransferPlanner },
   { id:"insights",  label:"Insights",    icon:"◎", component:ModelInsights   },
+  { id:"india",     label:"India FC",    icon:"◈", component:IndianFootballCommunity },
 ];
 
 // ─── FPL-STYLE TOPBAR ─────────────────────────────────────────────────────────
